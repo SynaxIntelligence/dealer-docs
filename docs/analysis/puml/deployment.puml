@@ -1,0 +1,111 @@
+
+@startuml
+
+!include <c4/C4_Deployment.puml>
+!include <c4/C4_Container.puml>
+!include <tupadr3/devicons/react>
+!include <tupadr3/devicons/docker.puml>
+!include <tupadr3/devicons/react>
+!include <tupadr3/devicons/java>
+!include <tupadr3/devicons/postgresql.puml>
+!include <tupadr3/devicons/python.puml>
+!include <tupadr3/devicons/dotnet.puml>
+!include <tupadr3/devicons/docker.puml>
+!include <tupadr3/devicons/msql_server.puml>
+!include <tupadr3/devicons2/spring.puml>
+!include <tupadr3/font-awesome/users>
+!include <tupadr3/font-awesome/server>
+!include <tupadr3/font-awesome/envelope>
+'!include <cloudogu/tools/docker>
+'allowmixing
+
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 12
+skinparam HyperlinkColor #335DA5
+skinparam HyperlinkUnderline false
+skinparam wrapWidth 200
+
+title \n= Диаграмма развертывания\n\n\n
+
+'HIDE_STEREOTYPE()
+SHOW_PERSON_PORTRAIT()
+
+AddElementTag("users", $bgColor="transparent", $fontColor="#335DA5", $borderThickness="0")
+AddElementTag("app", $sprite="react", $shadowing="true", $bgColor="#335DA5", $legendText="host")
+AddElementTag("microService", $shadowing="true")
+AddElementTag("backendContainer", $fontColor=$ELEMENT_FONT_COLOR, $bgColor="#335DA5", $shape=EightSidedShape(), $legendText="backend container (eight sided)")
+AddElementTag("storage", $shape=RoundedBoxShape(), $bgColor="lightSkyBlue", $fontColor="black")
+AddElementTag("gateway", $sprite="react", $shadowing="true", $shape=EightSidedShape(), $bgColor="#335DA5", $legendText="host")
+
+Person(dealer_user, "Dealers' Devices", "Клиентское оборудование\n для доступа к порталу")
+
+System_Boundary(distributor_sys, "Дистрибьютор") {
+    System_Ext(1cServer, "1C Server", "External system for product and dealer data")
+}
+
+Deployment_Node(k8sCluster, "Kubernetes Cluster") {
+    Deployment_Node(namespace, "Namespace: production") {
+        System_Boundary(report_system, "Дилерская отчетность") {
+
+        Deployment_Node(podWebServer, "Pod: Web Server") {
+            Container(webServer, "Web Server Container", "React JS", "Web App", $tags="app")
+        }
+
+        Deployment_Node(podKeycloak, "Pod: Keycloak SSO") {
+            Container(keycloak, "Keycloak Container", "SSO Authentication", "Manages Single Sign-On for users", $tags="microService")
+        }
+
+        Deployment_Node(podBalancer, "Pod: Balancer") {
+            Container(gateway, "Gateway", "APISIX", "API Gateway", $sprite="spring,scale=0.5", $tags="gateway")
+        }
+
+        Deployment_Node(podBackendMain, "Pod: Backend Service\n Main") {
+            Container(main_srv, "Main Service", "java spring", "Main backend for app", $sprite="spring,scale=0.5", $tags="microService")
+        }
+
+        Deployment_Node(podBackendSecondary, "Pod: Analytics\n Service") {
+            Container(analytics_srv, "Analytics Service", "java spring", "Analytics service", $sprite="spring,scale=0.5", $tags="microService")
+        }
+
+        Deployment_Node(podETL, "Pod: ETL") {
+            Container(etl_srv, "ETL Service", "java spring", "Extract Transform Load Service", $sprite="spring,scale=0.5", $tags="microService")
+        }
+
+        Deployment_Node(podKafka, "Pod: Kafka Broker") {
+            Container(kafka, "Kafka Broker", "Message Broker", "Handles messaging and data streaming")
+        }
+
+        Deployment_Node(podDatabaseMain, "Pod: Database Server") {
+            ContainerDb(main_db, "main-db", "Postgre SQL", "Main data\n storage", $sprite="postgresql", $tags="storage")
+        }
+
+        Deployment_Node(podDatabaseAnalytics, "Pod: Analytics Server") {
+            ContainerDb(analytics_db, "analytics", "ClickHouse", "Analytics\n storage", $sprite="postgresql", $tags="storage")
+        }
+
+        }
+    }
+}
+
+Rel(dealer_user, webServer, "uses :443", "https")
+
+Rel(webServer, gateway, "uses :443", "https")
+
+Rel(gateway, main_srv, "requests", "http")
+Rel(gateway, analytics_srv, "requests", "http")
+Rel(gateway, keycloak, "requests", "http")
+
+Rel(main_srv, main_db, "reads/writes :5432", "jdbc")
+Rel(analytics_srv, analytics_db, "reads/writes :5432", "jdbc")
+
+Rel_R(etl_srv, main_db, "reads/writes :5432", "jdbc")
+
+Rel_L(1cServer, kafka, "Send (Продукты, Дилеры)")
+Rel(kafka, etl_srv, "Forward (Продукты, Дилеры)")
+
+Lay_Distance(keycloak, kafka, 1)
+
+'SHOW_FLOATING_LEGEND()
+
+footer drawn with PlantUML v. %version() and C4-PlantUML v. C4Version()
+@enduml
