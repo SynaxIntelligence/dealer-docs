@@ -59,12 +59,15 @@ Deployment_Node(k8sCluster, "Kubernetes Cluster") {
             Container(gateway, "Gateway", "APISIX", "API Gateway", $sprite="spring,scale=0.5", $tags="gateway")
         }
 
-        Deployment_Node(podBackendMain, "Pod: Backend Service\n Main") {
-            Container(main_srv, "Main Service", "java spring", "Main backend for app", $sprite="spring,scale=0.5", $tags="microService")
-        }
+        Boundary(auth_requests, "Authenticated requests\n (JWT)") {
 
-        Deployment_Node(podBackendSecondary, "Pod: Analytics\n Service") {
-            Container(analytics_srv, "Analytics Service", "java spring", "Analytics service", $sprite="spring,scale=0.5", $tags="microService")
+            Deployment_Node(podBackendMain, "Pod: Backend Service\n Main") {
+                Container(main_srv, "Main Service", "java spring", "Main backend for app", $sprite="spring,scale=0.5", $tags="microService")
+            }
+
+            Deployment_Node(podBackendAnalytics, "Pod: Analytics\n Service") {
+                Container(analytics_srv, "Analytics Service", "java spring", "Analytics service", $sprite="spring,scale=0.5", $tags="microService")
+            }
         }
 
         Deployment_Node(podETL, "Pod: ETL") {
@@ -93,17 +96,22 @@ Rel(webServer, gateway, "uses :443", "https")
 
 Rel(gateway, main_srv, "requests", "http")
 Rel(gateway, analytics_srv, "requests", "http")
-Rel(gateway, keycloak, "requests", "http")
+Rel_L(gateway, keycloak, "requests", "http")
 
 Rel(main_srv, main_db, "reads/writes :5432", "jdbc")
 Rel(analytics_srv, analytics_db, "reads/writes :5432", "jdbc")
 
 Rel_R(etl_srv, main_db, "reads/writes :5432", "jdbc")
 
-Rel_L(1cServer, kafka, "Send (Продукты, Дилеры)")
-Rel(kafka, etl_srv, "Forward (Продукты, Дилеры)")
+Rel(1cServer, kafka, "Send (Продукты, Дилеры)")
+Rel_R(kafka, etl_srv, "Forward (Продукты, Дилеры)")
+BiRel(kafka, main_srv, "pub / sub", "mqtt")
+BiRel(kafka, analytics_srv, pub / sub", "mqtt")
 
-Lay_Distance(keycloak, kafka, 1)
+Lay_Distance(kafka, etl_srv, 1)
+Lay_Distance(gateway, kafka, 0)
+Lay_Distance(gateway, auth_requests, 1)
+'Lay_Distance(keycloak, auth_requests, 1)
 
 'SHOW_FLOATING_LEGEND()
 

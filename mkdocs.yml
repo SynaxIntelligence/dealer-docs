@@ -32,14 +32,10 @@ markdown_extensions:
 nav:
   - Главная: index.md
   - Анализ и планирование:
-      - Текущее состояние:  analysis/deployment.md
-      - Домены:  analysis/domains.md
-      - Микросервисы:  analysis/ms.md
+      - Развертывание:  analysis/deployment.md
       - ER:  analysis/er.md
   - API:
-      - AsyncAPI: api/main.md
       - REST API: swagger-ui.html
-  - k8s: k8s/k8s.md
 
 theme:
   name: material

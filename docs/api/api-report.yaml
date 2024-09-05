@@ -5,7 +5,7 @@ info:
   version: 1.0.0
 
 servers:
-  - url: https://api.report.com/v1
+  - url: https://api.report.ru/v1
     description: Production server
 
 tags:
@@ -100,6 +100,32 @@ paths:
       responses:
         '201':
           description: Продукт успешно добавлен
+    put:
+      tags:
+        - Products
+      summary: Редактирование продукта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        '200':
+          description: Продукт успешно изменен
+    delete:
+      tags:
+        - Products
+      summary: Удаление продукта
+      parameters:
+        - in: query
+          name: productId
+          schema:
+            type: integer
+          description: Идентификатор продукта
+      responses:
+        '200':
+          description: Продукт успешно удален
 
   /sales:
     get:

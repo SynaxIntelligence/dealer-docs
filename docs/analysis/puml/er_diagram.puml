@@ -3,14 +3,14 @@
 title \n= ER-диаграмма Дилерская аналитика\n\n\n
 
 entity "Dealers" as Dealers {
-  * dealer_id : UUID <<PK>>
+  * dealer_id : **UUID PK**
   ---
   name : String
   location : String
 }
 
 entity "Products" as Products {
-  * product_id : UUID <<PK>>
+  * product_id : **UUID PK**
   ---
   name : String
   category : String
@@ -18,39 +18,39 @@ entity "Products" as Products {
 }
 
 entity "Sales" as Sales {
-  * sale_id : UUID <<PK>>
+  * sale_id : **UUID PK**
   ---
-  dealer_id : UUID <<FK>>
-  product_id : UUID <<FK>>
+  dealer_id : **UUID FK**
+  product_id : **UUID FK**
   date : Date
   quantity : Integer
   total_amount : Decimal
 }
 
 entity "Inventory" as Inventory {
-  * inventory_id : UUID <<PK>>
+  * inventory_id : **UUID PK**
   ---
-  dealer_id : UUID <<FK>>
-  product_id : UUID <<FK>>
+  dealer_id : **UUID FK**
+  product_id : **UUID FK**
   stock_level : Integer
   last_updated : DateTime
 }
 
 entity "Sales Plans" as SalesPlans {
-  * plan_id : UUID <<PK>>
+  * plan_id : **UUID PK**
   ---
-  dealer_id : UUID <<FK>>
-  product_id : UUID <<FK>>
-  month : Date <<Indexed>>
+  dealer_id : **UUID FK**
+  product_id : **UUID FK**
+  month : Date
   planned_sales : Integer
 }
 
-Dealers ||--o{ Sales : "makes"
-Products ||--o{ Sales : "sold"
-Dealers ||--o{ Inventory : "has"
-Products ||--o{ Inventory : "stocked"
-Dealers ||--o{ SalesPlans : "sets"
-Products ||--o{ SalesPlans : "planned for"
+Dealers ||---o{ Sales : "makes"
+Products ||---o{ Sales : "sold"
+Dealers ||---o{ Inventory : "has"
+Products ||---o{ Inventory : "stocked"
+Dealers ||---o{ SalesPlans : "sets"
+Products ||---o{ SalesPlans : "planned"
 
 ' Display settings
 skinparam entity {
