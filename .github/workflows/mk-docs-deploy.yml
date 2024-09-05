@@ -32,6 +32,8 @@ jobs:
           publish_branch: site
 
       - name: Set GitHub Pages branch and path
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           gh api -X PATCH /repos/${{ github.repository }} \
             -f "has_pages=true" \
